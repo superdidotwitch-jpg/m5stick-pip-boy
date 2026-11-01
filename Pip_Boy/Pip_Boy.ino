@@ -6,7 +6,7 @@
   Shake = full-screen RAD counter (Wi-Fi Geiger), shake again to go back
   Time and date come from a known Wi-Fi at boot; with none, they are simply not shown.
   All lettering is drawn as LCD segments (see "LCD segment lettering").
-  Battery drives the figure: >50% healthy (walks, winks, thumbs up),
+  Battery drives the figure: >50% healthy (walks, winks, thumbs up, waves, hands on hips, stretches),
   20-50% tired, under 20% knocked out on the floor.
 
   Needs: M5Unified library only. The QR codes are drawn by M5GFX itself,
@@ -59,7 +59,8 @@ const Note M_BACH[]  = {{262,150},{330,150},{392,150},{523,150},{659,150},{392,1
 const Note M_BASE[]  = {{330,200},{392,200},{523,300},{494,200},{440,200},{392,300},{330,200},{392,200},{523,420}};
 const Note* mel = nullptr; int melLen = 0, melIdx = 0; uint32_t melNext = 0;
 
-void startMelody(const Note* m, int n){ mel=m; melLen=n; melIdx=0; melNext=millis(); }
+// start a little later so the button click is heard (a new tone cuts off the one playing)
+void startMelody(const Note* m, int n){ mel=m; melLen=n; melIdx=0; melNext=millis() + 60; }
 void stopMelody(){ mel=nullptr; }
 void updateMelody(){
   if(!mel) return;
@@ -246,6 +247,7 @@ void updateGeiger(){
     scanning = true;
   }
   int res = WiFi.scanComplete();
+  if(scanning && res == WIFI_SCAN_FAILED){ scanning = false; gNextScan = millis() + 1000; }   // retry instead of freezing
   if(scanning && res >= 0){
     int best = -100;
     for(int i=0;i<res;i++){ int r = WiFi.RSSI(i); if(r > best) best = r; }
@@ -264,6 +266,8 @@ void updateGeiger(){
   }
 }
 
+bool ntpPending(){ return bootWifiOk && !timeSynced && !wifiGaveUp; }
+
 // ---------- shake opens the RAD counter ----------
 float lastMag = 1.0; uint32_t shakeLock = 0;
 void checkShake(){
@@ -274,10 +278,26 @@ void checkShake(){
       radScreen = !radScreen;                // shake flips the full-screen RAD counter
       shakeLock = millis() + 700;
       if(radScreen){ stopMelody(); gNextScan = 0; gLevel = 0; }
+      else         { WiFi.scanDelete(); scanning = false; }
       beep(radScreen ? 1200 : 700, 45);
     }
     lastMag = mag;
   }
+}
+
+// ---------- battery ----------
+// read the gauge every 2s instead of every frame; the figure's mood only changes once the
+// level clearly crosses a threshold, so it doesn't flicker between poses at 50% / 20%
+int batLevel = 100, batMood = 2;   // batMood 2 = healthy, 1 = tired, 0 = knocked out
+uint32_t batNext = 0;
+void updateBattery(){
+  if(millis() < batNext) return;
+  batNext = millis() + 2000;
+  int lvl = M5.Power.getBatteryLevel();
+  batLevel = (lvl < 0) ? 100 : constrain(lvl, 0, 100);
+  if     (batLevel > 52 || (batMood == 2 && batLevel > 48)) batMood = 2;   // >50%, +-2% slack
+  else if(batLevel < 18 || (batMood == 0 && batLevel < 22)) batMood = 0;   // <20%, +-2% slack
+  else                                                      batMood = 1;
 }
 
 // ---------- drawing ----------
@@ -296,8 +316,7 @@ void drawTabs(){
 }
 
 void drawHP(){
-  int lvl = M5.Power.getBatteryLevel();
-  if(lvl < 0) lvl = 100;
+  int lvl = batLevel;
   canvas.drawFastHLine(0, 218, 135, C_GRN);
   segSmall("HP", 5, 223, 0, C_GRN);
   canvas.drawRect(24, 222, 72, 10, C_GRN);
@@ -312,7 +331,6 @@ uint32_t beatStart = 0; bool thumbBeat = false;
 int idleState = 0; uint32_t idleUntil = 0;
 
 void drawFigure(){
-  int lvl = M5.Power.getBatteryLevel(); if(lvl < 0) lvl = 100;
   int bob = (int)(sinf(millis()/300.0) * 3);   // gentle up/down
   struct tm tnow;                              // time + date, only once a known Wi-Fi gave the time
   if(getLocalTime(&tnow, 0)){
@@ -324,14 +342,16 @@ void drawFigure(){
   } else {
     segText(HANDLE, 67, 32, 16, 8, 2, 1, C_GRN, false);  // no time: the handle gets the space, bigger
   }
-  if(lvl > 50){
-    // random idle: walk, stop, thumbs-up/wink, wave
+  if(batMood == 2){
+    // random idle: walk, stop, thumbs-up/wink, wave, hands on hips, stretch
     if(millis() > idleUntil){
       int r = random(100);
-      if(r < 45)      { idleState = 0; idleUntil = millis() + random(1800, 4000); } // walk
-      else if(r < 65) { idleState = 1; idleUntil = millis() + random(1200, 2600); } // stand
-      else if(r < 80) { idleState = 2; idleUntil = millis() + random(1100, 1800); } // thumbs + wink
-      else            { idleState = 3; idleUntil = millis() + random(1200, 2200); } // wave
+      if(r < 38)      { idleState = 0; idleUntil = millis() + random(1800, 4000); } // walk
+      else if(r < 52) { idleState = 1; idleUntil = millis() + random(1200, 2600); } // stand
+      else if(r < 64) { idleState = 2; idleUntil = millis() + random(1100, 1800); } // thumbs + wink
+      else if(r < 76) { idleState = 3; idleUntil = millis() + random(1200, 2200); } // wave
+      else if(r < 88) { idleState = 4; idleUntil = millis() + random(1500, 2800); } // hands on hips
+      else            { idleState = 5; idleUntil = millis() + random(1500, 2500); } // stretch
     }
     if(idleState == 0){                        // walking, mirror = opposite step
       bool leg = (millis()/260) % 2;
@@ -342,10 +362,14 @@ void drawFigure(){
       canvas.pushImage((135-THUMB_W)/2, 65+bob, THUMB_W, THUMB_H, SPR_THUMB, KEY);
     } else if(idleState == 3){
       canvas.pushImage((135-WAVE_W)/2, 65+bob, WAVE_W, WAVE_H, SPR_WAVE, KEY);
+    } else if(idleState == 4){
+      canvas.pushImage((135-HIPS_W)/2, 65+bob, HIPS_W, HIPS_H, SPR_HIPS, KEY);
+    } else if(idleState == 5){
+      canvas.pushImage((135-STRETCH_W)/2, 65+bob, STRETCH_W, STRETCH_H, SPR_STRETCH, KEY);
     } else {
       canvas.pushImage((135-HEALTHY_W)/2, 65+bob, HEALTHY_W, HEALTHY_H, SPR_HEALTHY, KEY);
     }
-  } else if(lvl >= 20){
+  } else if(batMood == 1){
     int sway = (int)(sinf(millis()/450.0) * 2);
     canvas.pushImage((135-TIRED_W)/2+sway, 66+bob, TIRED_W, TIRED_H, SPR_TIRED, KEY);
   } else {
@@ -436,7 +460,7 @@ void setup(){
   canvas.setColorDepth(16);
   canvas.createSprite(135, 240);
   randomSeed(esp_random());
-  beep(523, 60); beep(784, 80);     // soft boot blips
+  beep(523, 60); delay(70); beep(784, 80);   // soft boot blips (a new tone cuts the last, so wait)
   onEnterTab();
 }
 
@@ -444,11 +468,12 @@ void loop(){
   M5.update();
   // keep trying NTP until the clock lands, then drop Wi-Fi.
   // give up after ~40s so a blocked time server can't keep the radio on and drain the battery.
-  if(bootWifiOk && !timeSynced && !wifiGaveUp){
+  if(ntpPending()){
     struct tm t;
     if(getLocalTime(&t, 0)){ timeSynced = true; WiFi.disconnect(); }
     else if(millis() > 40000){ WiFi.disconnect(); wifiGaveUp = true; }
   }
+  updateBattery();
   if(M5.BtnA.wasPressed() && !radScreen){ tab = (tab + 1) % T_COUNT; beep(1046, 30); onEnterTab(); }
   if(M5.BtnB.wasPressed() && !radScreen){ tab = (tab - 1 + T_COUNT) % T_COUNT; beep(880, 30); onEnterTab(); }
   checkShake();
