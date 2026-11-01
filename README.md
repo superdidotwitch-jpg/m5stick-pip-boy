@@ -1,25 +1,25 @@
 # Miniature Pip-Boy for M5Stack StickS3
 
-A pocket Fallout-style **Pip-Boy** that runs on an [M5Stack StickS3](https://docs.m5stack.com/en/core/M5StickS3). A green CRT UI with tabs you flip through: a character on the STAT screen whose mood follows the battery, QR codes to your links, and a Wi-Fi "Geiger counter."
+A pocket Fallout-style **Pip-Boy** that runs on an [M5Stack StickS3](https://docs.m5stack.com/en/core/StickS3). A green CRT UI with tabs you flip through: a character on the STAT screen whose mood follows the battery, QR codes to your links, and a Wi-Fi "Geiger counter."
 
 Built by **SuperDidZero**. The vault-dweller figure is my own cartoon avatar, left in so you get the same little guy; swap the links and handle for your own (see below).
 
 ![The four screens: STAT with the clock, STAT with no Wi-Fi, the BASE QR tab, and the RAD counter](images/screens.png)
 
-*Screen previews rendered from the sketch: STAT with the time and date, STAT with no known Wi-Fi (handle shown big), the BASE tab with a working QR code to pcbuildpt.com, and the RAD counter you get by shaking it.*
+*Screen previews rendered from the sketch: STAT with the time and date, STAT with no known Wi-Fi (an older preview: the handle now stays small and that space is left empty), the BASE tab with a working QR code to pcbuildpt.com, and the RAD counter you get by shaking it.*
 
 ## What it does
 
-- **STAT** — a walking vault-dweller, your handle, and the time and date (day.month.year). HP = the real battery level along the bottom. He reacts to the battery:
+- **STAT**: a walking vault-dweller, your handle, and the time and date (day.month.year). HP = the real battery level along the bottom. He reacts to the battery:
   - above 50%: random idle poses (walks, stops, thumbs up with a wink, waves, hands on hips, stretches)
   - 20–50%: slumped and panting
   - under 20%: collapsed on the floor
-- **COMMS / BASE / RADIO** — three QR codes (LinkedIn, website, Instagram), each playing a short public-domain tune when you open it.
-- **RAD counter** (shake) — a full-screen Geiger counter driven by the strongest Wi-Fi signal around you (needle + clicks), plus a count of nearby networks.
+- **COMMS / BASE / RADIO**: three QR codes (LinkedIn, website, Instagram), each playing a short public-domain tune when you open it.
+- **RAD counter** (shake): a full-screen Geiger counter driven by the strongest Wi-Fi signal around you (needle + clicks), plus a count of nearby networks.
 
 ### About the time
 
-The StickS3 has no battery-backed clock, so it can't keep time while it's switched off. At every boot it tries your Wi-Fi once to fetch the time, then turns Wi-Fi off (it gives up after about 40 seconds so it can't drain the battery). If it got the time, STAT shows it until you switch off, even after you leave home. If there was no known Wi-Fi at boot, the time and date are left off and your handle is shown bigger in their place.
+The StickS3 has no battery-backed clock, so it can't keep time while it's switched off. At every boot it tries your Wi-Fi once to fetch the time, then turns Wi-Fi off (it gives up after about 40 seconds so it can't drain the battery). If it got the time, STAT shows it until you switch off, even after you leave home. If there was no known Wi-Fi at boot, the time and date are simply left off.
 
 ### LCD lettering
 
@@ -27,9 +27,9 @@ Every word and number is drawn as a segmented LCD display, like an old digital w
 
 ## Controls
 
-- **Front button** — next tab
-- **Side button** — previous tab
-- **Shake** — full-screen RAD counter, shake again to go back
+- **Front button**: next tab
+- **Side button**: previous tab
+- **Shake**: full-screen RAD counter, shake again to go back
 
 ## How it fits together
 
@@ -58,7 +58,7 @@ The RAD counter opens from any tab, not just STAT.
 ## Build it
 
 1. Put `Pip_Boy.ino` and `sprites.h` together in a folder named `Pip_Boy`.
-2. Install the **M5Unified** library (Arduino Library Manager). Nothing else is needed — the QR codes are drawn by M5GFX.
+2. Install the **M5Unified** library (Arduino Library Manager). Nothing else is needed. The QR codes are drawn by M5GFX.
 3. Board: **M5StickS3**.
 4. Upload. If it won't connect, hold the side button until the green light blinks (download mode), pick the port, and upload again.
 
