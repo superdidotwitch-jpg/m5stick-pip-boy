@@ -8,6 +8,8 @@ Built by **SuperDidZero**. The vault-dweller figure is my own cartoon avatar, le
 
 *Screen previews rendered from the sketch: STAT with the time and date, STAT with no known Wi-Fi (an older preview: the handle now stays small and that space is left empty), the BASE tab with a working QR code to pcbuildpt.com, and the RAD counter you get by shaking it.*
 
+▶️ **[Watch it running on the real StickS3 (6 second video)](images/pip-boy-demo.mp4)**
+
 ## What it does
 
 - **STAT**: a walking vault-dweller, your handle, and the time and date (day.month.year). HP = the real battery level along the bottom. He reacts to the battery:
