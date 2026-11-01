@@ -11,7 +11,7 @@ Built by **SuperDidZero**. The vault-dweller figure is my own cartoon avatar, le
 ## What it does
 
 - **STAT** — a walking vault-dweller, your handle, and the time and date (day.month.year). HP = the real battery level along the bottom. He reacts to the battery:
-  - above 50%: random idle poses (walks, stops, thumbs up with a wink, waves)
+  - above 50%: random idle poses (walks, stops, thumbs up with a wink, waves, hands on hips, stretches)
   - 20–50%: slumped and panting
   - under 20%: collapsed on the floor
 - **COMMS / BASE / RADIO** — three QR codes (LinkedIn, website, Instagram), each playing a short public-domain tune when you open it.
@@ -48,7 +48,7 @@ The figure on STAT changes with the real battery level:
 
 ```mermaid
 flowchart LR
-    A["Above 50%<br/>walks, waves, winks, thumbs up"] -->|battery drops| B["20 to 50%<br/>slumped and panting"]
+    A["Above 50%<br/>walks, waves, winks, thumbs up,<br/>hands on hips, stretches"] -->|battery drops| B["20 to 50%<br/>slumped and panting"]
     B -->|battery drops| C["Under 20%<br/>collapsed on the floor"]
     C -->|charging| A
 ```
