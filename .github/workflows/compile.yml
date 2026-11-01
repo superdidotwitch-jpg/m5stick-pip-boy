@@ -1,0 +1,41 @@
+# Compile check: GitHub builds the sketch on every change, like pressing Verify in the Arduino IDE.
+# A red cross on the commit means it would not compile. Click Details to read the error.
+# The board package and library versions match the ones installed in the Arduino IDE.
+
+name: Compile check
+
+on:
+  push:
+    paths:
+      - "**.ino"
+      - "**.h"
+      - ".github/workflows/compile.yml"
+  pull_request:
+    paths:
+      - "**.ino"
+      - "**.h"
+      - ".github/workflows/compile.yml"
+  workflow_dispatch:   # adds a "Run workflow" button in the Actions tab
+
+jobs:
+  compile:
+    name: M5StickS3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: arduino/compile-sketches@v1
+        with:
+          fqbn: m5stack:esp32:m5stack_sticks3
+          platforms: |
+            - name: m5stack:esp32
+              source-url: https://static-cdn.m5stack.com/resource/arduino/package_m5stack_index.json
+              version: 3.3.10
+          libraries: |
+            - name: M5Unified
+              version: 0.2.29
+            - name: M5GFX
+              version: 0.2.36
+          sketch-paths: |
+            - Pip_Boy
+          enable-deltas-report: false
